@@ -6,16 +6,30 @@ const dotenv = require('dotenv');
 dotenv.config();
 const app = express();
 
-// CORS ayarları: Tüm origin'lere izin ver
+// İzin verilen origin (Vercel Dashboard veya .env dosyasından alınır)
+const allowedOrigin = process.env.ALLOWED_ORIGIN;
+
+if (!allowedOrigin) {
+  console.error('Hata: ALLOWED_ORIGIN ortam değişkeni eksik.');
+  return (req, res) => res.status(500).json({ error: 'Sunucu yapılandırma hatası: ALLOWED_ORIGIN tanımlı değil.' });
+}
+
+// CORS ayarları: Sadece izin verilen origin'e izin ver
 app.use(cors({
-  origin: '*',
+  origin: (origin, callback) => {
+    if (!origin || origin === allowedOrigin) {
+      callback(null, true);
+    } else {
+      callback(new Error(`Bu origin’den gelen istekler izin verilmiyor: ${origin}`));
+    }
+  },
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type'],
 }));
 
 // OPTIONS isteklerini ele al
 app.options('/submit', (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   res.status(200).send();
@@ -33,8 +47,8 @@ if (!botToken || !chatId) {
 
 // Test endpoint’i
 app.get('/test', (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.status(200).json({ message: 'Backend çalışıyor, CORS aktif.' });
+  res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+  res.status(200).json({ message: 'Backend çalışıyor, CORS aktif.', allowedOrigin });
 });
 
 // POST istekleri
