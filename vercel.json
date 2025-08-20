@@ -8,6 +8,16 @@
   ],
   "routes": [
     {
+      "src": "/submit",
+      "dest": "index.js",
+      "methods": ["POST", "OPTIONS"]
+    },
+    {
+      "src": "/test",
+      "dest": "index.js",
+      "methods": ["GET"]
+    },
+    {
       "src": "/(.*)",
       "dest": "index.js"
     }
