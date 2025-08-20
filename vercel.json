@@ -10,6 +10,10 @@
     {
       "src": "/submit",
       "dest": "backend/index.js"
+    },
+    {
+      "src": "/",
+      "dest": "backend/index.js"
     }
   ]
 }
