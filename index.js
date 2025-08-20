@@ -6,8 +6,22 @@ const dotenv = require('dotenv');
 dotenv.config();
 const app = express();
 
+// CORS ayarları: Tüm origin'lere izin ver ve preflight isteklerini destekle
+app.use(cors({
+  origin: '*', // Tüm origin'lere izin ver
+  methods: ['GET', 'POST', 'OPTIONS'], // İzin verilen metodlar
+  allowedHeaders: ['Content-Type'], // İzin verilen başlıklar
+}));
+
+// Preflight OPTIONS isteklerini ele al
+app.options('/submit', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.status(200).send();
+});
+
 app.use(express.json());
-app.use(cors()); // Tüm origin'lerden gelen istekleri kabul et
 
 const botToken = process.env.BOT_TOKEN;
 const chatId = process.env.CHAT_ID;
@@ -16,14 +30,6 @@ if (!botToken || !chatId) {
   console.error('Hata: BOT_TOKEN veya CHAT_ID eksik. Lütfen environment variables\'ı kontrol edin.');
   return (req, res) => res.status(500).json({ error: 'Sunucu yapılandırma hatası.' });
 }
-
-// Tüm istekler için metod kontrolü
-app.all('/submit', (req, res, next) => {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Yalnızca POST istekleri kabul edilir' });
-  }
-  next();
-});
 
 // POST isteklerini işleme
 app.post('/submit', async (req, res) => {
