@@ -6,19 +6,25 @@ const dotenv = require('dotenv');
 dotenv.config();
 const app = express();
 
-// İzin verilen origin (Vercel Dashboard veya .env dosyasından alınır, opsiyonel)
-const allowedOrigin = process.env.ALLOWED_ORIGIN || '*'; // Varsayılan olarak tüm origin'lere izin ver
+// İzin verilen origin (Vercel Dashboard veya .env dosyasından alınır)
+const allowedOrigin = process.env.ALLOWED_ORIGIN;
 
 // Ortam değişkenlerini logla
 console.log('ALLOWED_ORIGIN:', allowedOrigin);
 console.log('BOT_TOKEN:', process.env.BOT_TOKEN ? 'Tanımlı' : 'Eksik');
 console.log('CHAT_ID:', process.env.CHAT_ID ? 'Tanımlı' : 'Eksik');
 
-// CORS ayarları: İzin verilen origin'e göre yapılandır
+// ALLOWED_ORIGIN zorunlu
+if (!allowedOrigin) {
+  console.error('Hata: ALLOWED_ORIGIN ortam değişkeni eksik.');
+  return (req, res) => res.status(500).json({ error: 'Sunucu yapılandırma hatası: ALLOWED_ORIGIN tanımlı değil.' });
+}
+
+// CORS ayarları: Yalnızca ALLOWED_ORIGIN’den gelen istekleri kabul et
 app.use(cors({
   origin: (origin, callback) => {
     console.log('İstek origin’i:', origin);
-    if (allowedOrigin === '*' || !origin || origin === allowedOrigin) {
+    if (!origin || origin === allowedOrigin) {
       callback(null, true);
     } else {
       callback(new Error(`Bu origin’den gelen istekler izin verilmiyor: ${origin}`));
